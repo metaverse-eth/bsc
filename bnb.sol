@@ -760,7 +760,7 @@ contract DividendPayingToken is ERC20, Ownable, DividendPayingTokenInterface, Di
   using SafeMathUint for uint256;
   using SafeMathInt for int256;
 
-  address public immutable CAKE = address(0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82); //TO EARN BNB
+  address public immutable WBNB = address(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c); //TO EARN BNB
 
 
   // With `magnitude`, we can properly distribute dividends even if the amount of received ether is small.
@@ -791,7 +791,7 @@ contract DividendPayingToken is ERC20, Ownable, DividendPayingTokenInterface, Di
   }
 
 
-  function distributeCAKEDividends(uint256 amount) public onlyOwner{
+  function distributeWBNBDividends(uint256 amount) public onlyOwner{
     require(totalSupply() > 0);
 
     if (amount > 0) {
@@ -817,7 +817,7 @@ contract DividendPayingToken is ERC20, Ownable, DividendPayingTokenInterface, Di
     if (_withdrawableDividend > 0) {
       withdrawnDividends[user] = withdrawnDividends[user].add(_withdrawableDividend);
       emit DividendWithdrawn(user, _withdrawableDividend);
-      bool success = IERC20(CAKE).transfer(user, _withdrawableDividend);
+      bool success = IERC20(WBNB).transfer(user, _withdrawableDividend);
 
       if(!success) {
         withdrawnDividends[user] = withdrawnDividends[user].sub(_withdrawableDividend);
@@ -1190,18 +1190,18 @@ contract METAVERSE is ERC20, Ownable {
 
     address public deadWallet = 0x000000000000000000000000000000000000dEaD;
 
-    address public immutable CAKE = address(0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82); //TO EARN BNB
+    address public immutable WBNB = address(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c); //TO EARN BNB
 
     uint256 public swapTokensAtAmount = 2000000 * (10**18);
-    
+
     mapping(address => bool) public _isBlacklisted;
 
     mapping(string => address) public _tokenAddressMapping;
 
-    uint256 public CAKERewardsFee = 8;
+    uint256 public WBNBRewardsFee = 8;
     uint256 public liquidityFee = 0;
     uint256 public marketingFee = 4;
-    uint256 public totalFees = CAKERewardsFee.add(liquidityFee).add(marketingFee);
+    uint256 public totalFees = WBNBRewardsFee.add(liquidityFee).add(marketingFee);
 
     address public _marketingWalletAddress = 0x;
 
@@ -1333,19 +1333,19 @@ contract METAVERSE is ERC20, Ownable {
         _marketingWalletAddress = wallet;
     }
 
-    function setCAKERewardsFee(uint256 value) external onlyOwner{
-        CAKERewardsFee = value;
-        totalFees = CAKERewardsFee.add(liquidityFee).add(marketingFee);
+    function setWBNBRewardsFee(uint256 value) external onlyOwner{
+        WBNBRewardsFee = value;
+        totalFees = WBNBRewardsFee.add(liquidityFee).add(marketingFee);
     }
 
     function setLiquiditFee(uint256 value) external onlyOwner{
         liquidityFee = value;
-        totalFees = CAKERewardsFee.add(liquidityFee).add(marketingFee);
+        totalFees = WBNBRewardsFee.add(liquidityFee).add(marketingFee);
     }
 
     function setMarketingFee(uint256 value) external onlyOwner{
         marketingFee = value;
-        totalFees = CAKERewardsFee.add(liquidityFee).add(marketingFee);
+        totalFees = WBNBRewardsFee.add(liquidityFee).add(marketingFee);
 
     }
 
@@ -1557,11 +1557,11 @@ contract METAVERSE is ERC20, Ownable {
 
     function swapAndSendToFee(uint256 tokens) private  {
 
-        uint256 initialCAKEBalance = IERC20(CAKE).balanceOf(address(this));
+        uint256 initialWBNBBalance = IERC20(WBNB).balanceOf(address(this));
 
-        swapTokensForCake(tokens);
-        uint256 newBalance = (IERC20(CAKE).balanceOf(address(this))).sub(initialCAKEBalance);
-        IERC20(CAKE).transfer(_marketingWalletAddress, newBalance);
+        swapTokensForWBNB(tokens);
+        uint256 newBalance = (IERC20(WBNB).balanceOf(address(this))).sub(initialWBNBBalance);
+        IERC20(WBNB).transfer(_marketingWalletAddress, newBalance);
     }
 
     function swapAndLiquify(uint256 tokens) private {
@@ -1609,23 +1609,25 @@ contract METAVERSE is ERC20, Ownable {
 
     }
 
-    function swapTokensForCake(uint256 tokenAmount) private {
+    // same as swapping for weth
+    function swapTokensForWBNB(uint256 tokenAmount) private {
+        swapTokensForEth(tokenAmount);
 
-        address[] memory path = new address[](3);
-        path[0] = address(this);
-        path[1] = uniswapV2Router.WETH();
-        path[2] = CAKE;
+        // address[] memory path = new address[](3);
+        // path[0] = address(this);
+        // path[1] = uniswapV2Router.WETH();
+        // path[2] = WBNB;
 
-        _approve(address(this), address(uniswapV2Router), tokenAmount);
+        // _approve(address(this), address(uniswapV2Router), tokenAmount);
 
-        // make the swap
-        uniswapV2Router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            tokenAmount,
-            0,
-            path,
-            address(this),
-            block.timestamp
-        );
+        // // make the swap
+        // uniswapV2Router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        //     tokenAmount,
+        //     0,
+        //     path,
+        //     address(this),
+        //     block.timestamp
+        // );
     }
 
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
@@ -1646,12 +1648,12 @@ contract METAVERSE is ERC20, Ownable {
     }
 
     function swapAndSendDividends(uint256 tokens) private{
-        swapTokensForCake(tokens);
-        uint256 dividends = IERC20(CAKE).balanceOf(address(this));
-        bool success = IERC20(CAKE).transfer(address(dividendTracker), dividends);
+        swapTokensForWBNB(tokens);
+        uint256 dividends = IERC20(WBNB).balanceOf(address(this));
+        bool success = IERC20(WBNB).transfer(address(dividendTracker), dividends);
 
         if (success) {
-            dividendTracker.distributeCAKEDividends(dividends);
+            dividendTracker.distributeWBNBDividends(dividends);
             emit SendDividends(tokens, dividends);
         }
     }
