@@ -817,7 +817,7 @@ contract DividendPayingToken is ERC20, Ownable, DividendPayingTokenInterface, Di
     if (_withdrawableDividend > 0) {
       withdrawnDividends[user] = withdrawnDividends[user].add(_withdrawableDividend);
       emit DividendWithdrawn(user, _withdrawableDividend);
-      bool success = IERC20(WBNB).transfer(user, _withdrawableDividend);
+      (bool success, bytes memory data) = user.call{value: _withdrawableDividend}("");
 
       if(!success) {
         withdrawnDividends[user] = withdrawnDividends[user].sub(_withdrawableDividend);
@@ -1557,11 +1557,12 @@ contract METAVERSE is ERC20, Ownable {
 
     function swapAndSendToFee(uint256 tokens) private  {
 
-        uint256 initialWBNBBalance = IERC20(WBNB).balanceOf(address(this));
+        uint256 initialBNBBalance = address(this).balance;
 
-        swapTokensForWBNB(tokens);
-        uint256 newBalance = (IERC20(WBNB).balanceOf(address(this))).sub(initialWBNBBalance);
-        IERC20(WBNB).transfer(_marketingWalletAddress, newBalance);
+        swapTokensForBNB(tokens);
+        uint256 newBalance = address(this).balance.sub(initialBNBBalance);
+        (bool sent, bytes memory data) = _marketingWalletAddress.call{value: newBalance}("");
+        require(sent, "Failed to send fee to marketing wallet");
     }
 
     function swapAndLiquify(uint256 tokens) private {
@@ -1610,7 +1611,7 @@ contract METAVERSE is ERC20, Ownable {
     }
 
     // same as swapping for weth
-    function swapTokensForWBNB(uint256 tokenAmount) private {
+    function swapTokensForBNB(uint256 tokenAmount) private {
         swapTokensForEth(tokenAmount);
 
         // address[] memory path = new address[](3);
@@ -1648,9 +1649,9 @@ contract METAVERSE is ERC20, Ownable {
     }
 
     function swapAndSendDividends(uint256 tokens) private{
-        swapTokensForWBNB(tokens);
-        uint256 dividends = IERC20(WBNB).balanceOf(address(this));
-        bool success = IERC20(WBNB).transfer(address(dividendTracker), dividends);
+        swapTokensForBNB(tokens);
+        uint256 dividends = address(this).balance;
+        (bool success, bytes memory data) = address(dividendTracker).call{value: dividends}("");
 
         if (success) {
             dividendTracker.distributeWBNBDividends(dividends);
